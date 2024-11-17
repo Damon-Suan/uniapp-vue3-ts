@@ -7,13 +7,13 @@ import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import HotPanel from './components/HotPanel.vue'
 import type { SuGuessInstance } from '@/types/component'
+import PageSkeleton from './components/PageSkeleton.vue'
 
 //获取轮播图
 const bannerLiist = ref<BannerItem[]>([])
 const getHomeBannerData = async () => {
   const res = await getHomeBannerAPI()
   bannerLiist.value = res.result
-  console.log(res, 11111)
 }
 //分类
 const CategoryLiist = ref<CategoryItem[]>([])
@@ -27,32 +27,59 @@ const getHomeMutliData = async () => {
   const res = await getHomeMutliAPI()
   HotLiist.value = res.result
 }
-// 到底了
-const onScrolltolower = () => {
-  console.log('daodile')
-  guessRef.value?.getGuessData()
-}
 //猜你喜欢实例
 const guessRef = ref<SuGuessInstance>()
-onLoad(() => {
-  getHomeBannerData()
-  getHomeCategoryData()
-  getHomeMutliData()
+// 到底了
+const onScrolltolower = () => {
+  console.log('到底了')
+  guessRef.value?.getGuessData()
+}
+const isLoading = ref(false)
+onLoad(async () => {
+  isLoading.value = true
+  await Promise.all([getHomeBannerData(), getHomeCategoryData(), getHomeMutliData()])
+  isLoading.value = false
 })
+const isTrigger = ref(false)
+const onRefresherrefresh = async () => {
+  isTrigger.value = true
+  console.log('下拉刷新了')
+  // getHomeBannerData()
+  // getHomeCategoryData()
+  // getHomeMutliData()
+  guessRef.value?.resData()
+  await Promise.all([
+    getHomeBannerData(),
+    getHomeCategoryData(),
+    getHomeMutliData(),
+    guessRef.value?.getGuessData(),
+  ])
+  isTrigger.value = false
+}
 </script>
 
 <template>
   <!-- 导航栏 -->
   <custom-navbar />
-  <scroll-view @scrolltolower="onScrolltolower" scroll-y class="scroll-view">
-    <!-- 轮播图 -->
-    <SuSwiper :list="bannerLiist" />
-    <!-- 分类 -->
-    <CategoryPanel :list="CategoryLiist" />
-    <!-- 热门推荐 -->
-    <HotPanel :list="HotLiist" />
-    <!-- 猜你喜欢 -->
-    <SuGuess ref="guessRef" />
+  <scroll-view
+    refresher-enabled
+    @refresherrefresh="onRefresherrefresh"
+    :refresher-triggered="isTrigger"
+    @scrolltolower="onScrolltolower"
+    scroll-y
+    class="scroll-view"
+  >
+    <PageSkeleton v-if="isLoading" />
+    <template v-else>
+      <!-- 轮播图 -->
+      <SuSwiper :list="bannerLiist" />
+      <!-- 分类 -->
+      <CategoryPanel :list="CategoryLiist" />
+      <!-- 热门推荐 -->
+      <HotPanel :list="HotLiist" />
+      <!-- 猜你喜欢 -->
+      <SuGuess ref="guessRef" />
+    </template>
   </scroll-view>
 </template>
 
