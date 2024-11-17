@@ -1,7 +1,7 @@
 <script setup lang="ts">
 //
 const { safeAreaInsets } = uni.getSystemInfoSync()
-console.log(safeAreaInsets)
+console.log(safeAreaInsets, 111)
 </script>
 
 <template>
